@@ -1,0 +1,54 @@
+library(simmer)
+library(simmer.plot)
+library(gridExtra)
+
+set.seed(1234)
+
+ICU <-simmer()
+
+bedoccupancy <-26  ##26 beds -mean number of bed occupancy in Tower
+
+Patient <-
+  trajectory("PatientsinICU") %>%
+  log_("NumberofBedsOccupied") %>%
+  seize("bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() {rexp(1, 1/bedoccupancy )}) %>%  ##taking the exponential from the mean days spent in ICU
+  release("bed") %>%
+  log_(function() {paste("Finished: ", now(ICU))})
+
+
+ICU <-
+  simmer("ICU") %>%
+  add_resource("bed",32) %>%  #32beds in Tower
+  add_resource("nurses",40) %>%  #Funded for 52 staff in ICU across all sites, but only around 40 nurses we have
+  add_generator("Patient", Patient,function() {c(0, rexp(19, 1/bedoccupancy), -1)})   ##
+
+ICU %>% run(until = 400)  ##simulation runs for 400days
+ICU %>% get_mon_arrivals()
+
+ICU %>%
+  get_mon_arrivals() %>%
+  transform(waiting_time = end_time - start_time - activity_time) %>%
+       .[order(.$start_time),]
+
+resources <- get_mon_resources(ICU)
+p1=plot(resources, metric = "utilisation")  #resource utilisation graph
+
+p2=plot(resources, metric = "usage", c("bed"),  ##resource usage
+        items = c( "queue", "server"))
+arrivals <- get_mon_arrivals(ICU)
+
+p3=plot(arrivals, metric = "waiting_time")  ##Waiting time for a bed
+p4=plot(arrivals, metric = "activity_time")
+grid.arrange(p2,p3,p4)
+
+ICU %>%
+  get_mon_arrivals %>%
+  ggplot(aes(end_time - start_time)) +
+  geom_histogram() +
+  xlab("Days spent in ICU (Days)") +
+  ylab("Number of patients")
+ ## main("Number of Days Patient spent in ICU")
+
+plot(ICU)
