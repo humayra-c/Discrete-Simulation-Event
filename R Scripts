@@ -21,7 +21,7 @@ ICU <-
   simmer("ICU") %>%
   add_resource("bed",32) %>%  #32beds in Tower
   add_resource("nurses",40) %>%  #Need to check Funded for 52 staff in ICU across all sites ?
-  add_generator("Patient", Patient,function() {c(0, rexp(19, 1/daysInICU), -1)})   ##
+    add_generator("Patient", Patient,function() rexp(1, 1/daysInICU))##
 
 ICU %>% run(until = 400)  ##simulation runs for 400days
 ICU %>% get_mon_arrivals()
