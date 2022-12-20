@@ -6,14 +6,15 @@ set.seed(1234)
 
 ICU <-simmer()
 
-daysInICU <- 4 ##4day -mean number of days from nov 2021-Nov 2022
+bedsinICU <- 26 ##26 bedoccupancy -mean number of bed occupancy from nov 2021-Nov 2022
 
 Patient <-
   trajectory("PatientsinICU") %>%
-  log_("SpentinICU") %>%
+  log_("BedOccupancyICU") %>%
+  set_attribute("start_time", function() {now(ICU)}) %>%
   seize("bed") %>%
   log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
-  timeout(function() {rexp(1, 1/daysInICU)}) %>%  ##taking the exponential from the mean days spent in ICU
+  timeout(function() {rexp(1, 1/bedsinICU)}) %>%  ##taking the exponential from the mean days spent in ICU
   release("bed") %>%
   log_(function() {paste("Finished: ", now(ICU))})
 
@@ -21,28 +22,40 @@ ICU <-
   simmer("ICU") %>%
   add_resource("bed",32) %>%  #32beds in Tower
   add_resource("nurses",40) %>%  #Need to check Funded for 52 staff in ICU across all sites ?
-    add_generator("Patient", Patient,function() rexp(1, 1/daysInICU))##
+  add_generator("Patient", Patient,function() rexp(1, 1/bedsinICU))##
 
 ICU %>% run(until = 400)  ##simulation runs for 400days
 ICU %>% get_mon_arrivals()
 
-ICU %>%
-  get_mon_arrivals() %>%
-  transform(waiting_time = end_time - start_time - activity_time) %>%
-       .[order(.$start_time),]
 
+ICU_monitor<-get_mon_arrivals(ICU) %>%
+  transform(waiting_time = end_time - start_time - activity_time) 
+
+mean_waiting_time <- mean(ICU_monitor$wait)
 resources <- get_mon_resources(ICU)
 
+queue_state <- head(resources$queue, -1)
+server_state <- head(resources$server, -1)
+time_state_lasted <- diff(resources$time)
+time_at_end <- max(resources$time)
+
+mean_active_customers <- sum(server_state * time_state_lasted) / time_at_end
+mean_waiting_customers <- sum(queue_state * time_state_lasted) / time_at_end
+
+cat(" Average waiting = ", mean_waiting_customers, "\n",
+    "Average active  = ", mean_active_customers, "\n")
+
+
 ###############GRAPHS##############
-p1=plot(resources, metric = "utilisation")  #resource utilisation graph
+##p1=plot(resources, metric = "utilisation")  #resource utilisation graph
 
-p2=plot(resources, metric = "usage", c("bed"),  ##resource usage
-        items = c( "queue", "server"))
-arrivals <- get_mon_arrivals(ICU)
+##p2=plot(resources, metric = "usage", c("bed"),  ##resource usage
+       ## items = c( "queue", "server"))
+##arrivals <- get_mon_arrivals(ICU)
 
-p3=plot(arrivals, metric = "waiting_time")  ##Waiting time for a bed
-p4=plot(arrivals, metric = "activity_time")
-grid.arrange(p1,p2,p3,p4)
+##p3=plot(arrivals, metric = "waiting_time")  ##Waiting time for a bed
+##p4=plot(arrivals, metric = "activity_time")
+##grid.arrange(p2,p3,p4)
 
 ICU %>%
   get_mon_resources() %>%
@@ -54,7 +67,12 @@ ICU %>%
   geom_histogram() +
   xlab("Days spent in ICU (Days)") +
   ylab("Number of patients")
- ## main("Number of Days Patient spent in ICU")
+## main("Number of Days Patient spent in ICU")
 
-plot(ICU)
+plot(ICU,
+     what = "resources",
+     metric = "usage",
+     names = "bed",
+     items = "system",
+     steps = TRUE)
 
