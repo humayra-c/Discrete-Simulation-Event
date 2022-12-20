@@ -30,14 +30,14 @@ ICU %>% get_mon_arrivals()
 
 ICU_monitor<-get_mon_arrivals(ICU) %>%
   transform(waiting_time = end_time - start_time - activity_time) 
-
+  
 mean_waiting_time <- mean(ICU_monitor$wait)
-resources <- get_mon_resources(ICU)
+resource_monitor <- get_mon_resources(ICU)
 
-queue_state <- head(resources$queue, -1)
-server_state <- head(resources$server, -1)
-time_state_lasted <- diff(resources$time)
-time_at_end <- max(resources$time)
+queue_state <- head(resource_monitor$queue, -1)
+server_state <- head(resource_monitor$server, -1)
+time_state_lasted <- diff(resource_monitor$time)
+time_at_end <- max(resource_monitor$time)
 
 mean_active_customers <- sum(server_state * time_state_lasted) / time_at_end
 mean_waiting_customers <- sum(queue_state * time_state_lasted) / time_at_end
