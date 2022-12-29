@@ -15,7 +15,7 @@ Patient <-
   set_attribute("start_time", function() {now(ICU)}) %>%
   seize("bed") %>%
   log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
-  timeout(function() {rexp(1, 1/arrinICU)}) %>%  
+  timeout(function() {rexp(1, 1/bedsinICU)}) %>%  
   release("bed") %>%
   log_(function() {paste("Finished: ", now(ICU))})
 
