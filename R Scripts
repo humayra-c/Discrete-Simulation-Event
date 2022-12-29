@@ -6,7 +6,7 @@ set.seed(1234)
 
 ICU <-simmer()
 
-bedsinICU <- 26 ##26 bedoccupancy -mean number of bed occupancy from nov 2021-Nov 2022
+bedsinICU <- 15 ##15 bedoccupancy -mean number of bed occupancy from nov 2021-Nov 2022
 arrinICU <-2.66
 
 Patient <-
