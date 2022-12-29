@@ -7,6 +7,7 @@ set.seed(1234)
 ICU <-simmer()
 
 bedsinICU <- 26 ##26 bedoccupancy -mean number of bed occupancy from nov 2021-Nov 2022
+arrinICU <-2.66
 
 Patient <-
   trajectory("PatientsinICU") %>%
@@ -14,7 +15,7 @@ Patient <-
   set_attribute("start_time", function() {now(ICU)}) %>%
   seize("bed") %>%
   log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
-  timeout(function() {rexp(1, 1/bedsinICU)}) %>%  ##taking the exponential from the mean days spent in ICU
+  timeout(function() {rexp(1, 1/arrinICU)}) %>%  
   release("bed") %>%
   log_(function() {paste("Finished: ", now(ICU))})
 
@@ -22,7 +23,7 @@ ICU <-
   simmer("ICU") %>%
   add_resource("bed",32) %>%  #32beds in Tower
   add_resource("nurses",40) %>%  #Need to check Funded for 52 staff in ICU across all sites ?
-  add_generator("Patient", Patient,function() rexp(1, 1/bedsinICU))##
+  add_generator("Patient", Patient,function() rexp(1, 1/arrinICU)##
 
 ICU %>% run(until = 400)  ##simulation runs for 400days
 ICU %>% get_mon_arrivals()
