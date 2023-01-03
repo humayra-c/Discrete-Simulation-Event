@@ -1,13 +1,24 @@
+##library(descem)
+##library(dplyr)
+##library(ggplot2)
+##library(kableExtra)
+##library(purrr)
+##library(tidyr)
 library(simmer)
 library(simmer.plot)
 library(gridExtra)
+
+
 #########################
+##Bed=read.csv("P:/Users/HCHOWDH1/Critical Care/Bed Modelling/bed occupancy data.csv",header=TRUE,na.strings="?")
+
 set.seed(1234)
 
 ICU <-simmer()
 
-bedsinICU <- 15 ##15 bedoccupancy -mean number of bed occupancy from nov 2021-Nov 2022
-arrinICU <-2.66
+bedsinICU <- 20 ##26 bedoccupancy - mean number of bed occupancy from nov 2021-Nov 2022
+arrinICU <-2.66075949367089  ##when Patient arrived, e.g. 30days are occupied
+
 
 Patient <-
   trajectory("PatientsinICU") %>%
@@ -15,15 +26,15 @@ Patient <-
   set_attribute("start_time", function() {now(ICU)}) %>%
   seize("bed") %>%
   log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
-  timeout(function() {rexp(1, 1/bedsinICU)}) %>%  
+  timeout(function() {rexp(1, 1/bedsinICU)}) %>%  ##taking the exponential from the mean days spent in ICU
   release("bed") %>%
   log_(function() {paste("Finished: ", now(ICU))})
 
 ICU <-
   simmer("ICU") %>%
-  add_resource("bed",32) %>%  #32beds in Tower
+  add_resource("bed",23) %>%  #32beds in Tower
   add_resource("nurses",40) %>%  #Need to check Funded for 52 staff in ICU across all sites ?
-  add_generator("Patient", Patient,function() rexp(1, 1/arrinICU)##
+  add_generator("Patient", Patient,function() rexp(1, 1/arrinICU))##
 
 ICU %>% run(until = 400)  ##simulation runs for 400days
 ICU %>% get_mon_arrivals()
@@ -31,7 +42,7 @@ ICU %>% get_mon_arrivals()
 
 ICU_monitor<-get_mon_arrivals(ICU) %>%
   transform(waiting_time = end_time - start_time - activity_time) 
-  
+
 mean_waiting_time <- mean(ICU_monitor$wait)
 resource_monitor <- get_mon_resources(ICU)
 
