@@ -1,0 +1,86 @@
+##library(descem)
+##library(dplyr)
+##library(ggplot2)
+##library(kableExtra)
+##library(purrr)
+##library(tidyr)
+library(simmer)
+library(simmer.plot)
+library(gridExtra)
+library(magrittr)
+
+
+#########################
+##Bed=read.csv("P:/Users/HCHOWDH1/Critical Care/Bed Modelling/bed occupancy data.csv",header=TRUE,na.strings="?")
+
+set.seed(1234)
+
+ICU <-simmer("ICU")
+
+bedsinICU <- 21 ##23 bedoccupancy - mean number of bed occupancy from Jan -Nov 2022
+arrinICU <-3 ##when Patient arrived, e.g. 30days are occupied
+nursesinICU <-36
+
+
+Patient <-
+  trajectory("PatientsinICU") %>%
+  log_("BedOccupancyICU") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,bedsinICU)) %>%  ##mean beds in ICU
+  release("bed") %>%
+  
+  seize("nurse",1) %>%
+  timeout(function() rnorm (1,nursesinICU)) %>%  ##taking the exponential from the mean days spent in ICU
+  release("nurse") %>%
+  
+  log_(function() {paste("Finished: ", now(ICU))})
+
+
+ICU <-
+  simmer("ICU") %>%
+  add_resource("bed",23) %>%  #23beds in Tower
+  add_resource("nurse",52) %>%  #Need to check Funded for 52 staff in ICU across all sites ?
+  add_generator("Patient", Patient,function() rnorm (1,arrinICU))##
+
+ICU %>% run(until = 400)  ##simulation runs for 400days
+ICU %>% get_mon_arrivals()
+
+
+ICU_monitor<-get_mon_arrivals(ICU) %>%
+  transform(waiting_time = end_time - start_time - activity_time) 
+
+mean_waiting_time <- mean(ICU_monitor$wait)
+resource_monitor <- get_mon_resources(ICU)
+
+queue_state <- head(resource_monitor$queue, -1)
+server_state <- head(resource_monitor$server, -1)
+time_state_lasted <- diff(resource_monitor$time)
+time_at_end <- max(resource_monitor$time)
+
+##mean_active_customers <- sum(server_state * time_state_lasted) / time_at_end
+##mean_waiting_customers <- sum(queue_state * time_state_lasted) / time_at_end
+
+##cat(" Average waiting = ", mean_waiting_customers, "\n",
+  ## "Average active  = ", mean_active_customers, "\n")
+
+
+###############GRAPHS##############
+
+ICU %>%
+  get_mon_resources() %>%
+  .[order(.$time),]
+
+plot(ICU,
+     what = "resources",
+     metric = "usage",
+     names = c( "bed","nurse"),
+     items = "system",
+     steps = TRUE)
+
+plot(ICU,what="resources",metric="usage",c("bed","nurse"),items=c("server","queue"))
+plot(ICU,what="arrivals",metric="waiting_time")
+
+##plot(get_mon_resources((ICU)))
