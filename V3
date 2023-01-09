@@ -17,8 +17,8 @@ set.seed(1234)
 
 ICU <-simmer("ICU")
 
-bedsinICU <- 21 ##23 bedoccupancy - mean number of bed occupancy from Jan -Nov 2022
-arrinICU <-3 ##when Patient arrived, e.g. 30days are occupied
+bedsinICU <- 21 ##23 bedoccupancy - mean number of bed occupancy from Jan 2022 onwards
+arrinICU <-2.66075949367089 ##when Patient arrived
 nursesinICU <-36
 
 
@@ -33,7 +33,7 @@ Patient <-
   release("bed") %>%
   
   seize("nurse",1) %>%
-  timeout(function() rnorm (1,nursesinICU)) %>%  ##taking the exponential from the mean days spent in ICU
+  timeout(function() rnorm (1,nursesinICU)) %>%  ##mean nurses in ICU
   release("nurse") %>%
   
   log_(function() {paste("Finished: ", now(ICU))})
