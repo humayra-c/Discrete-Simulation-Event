@@ -17,9 +17,9 @@ set.seed(1234)
 
 ICU <-simmer("ICU")
 
-bedsinICU <- 21 ##23 bedoccupancy - mean number of bed occupancy from Jan 2022 onwards
-arrinICU <-2.66075949367089 ##when Patient arrived
-nursesinICU <-36
+bedsinICU <- 102 ##time, on average, a single bed is occupied in hours
+arrinICU <-4.233 ##time spent waiting before taken to a bed
+nursesinICU <-36 #average time spent on ward
 
 
 Patient <-
