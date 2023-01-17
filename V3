@@ -17,35 +17,74 @@ set.seed(1234)
 
 ICU <-simmer("ICU")
 
-bedsinICU <- 102 ##time, on average, a single bed is occupied in hours
-arrinICU <-4.233 ##time spent waiting before taken to a bed
-nursesinICU <-36 #average time spent on ward
+totalbedsinICU <-47.59  ##time, on average, a single bed is occupied in hours
+totalarrinICU <- 4.3 ##hours
+
+T03beds <-118.1
+T03arrinICU <-8.53
+
+T06beds <-47.59
+T06arrinICU <-0
+
+WMSbeds <- 49.29
+WMSarrinICU <- 9.25
+
+GBWbeds <-106.98
+GWBarrinICU <-6.86
 
 
 Patient <-
   trajectory("PatientsinICU") %>%
   log_("BedOccupancyICU") %>%
   
+  ##set_attribute("start_time", function() {now(ICU)}) %>%
+  ##seize("bed",1) %>%
+  ##log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  ##timeout(function() rnorm (1,totalbedsinICU)) %>%  ##mean beds in ICU
+  ##release("bed") %>%
+  
   set_attribute("start_time", function() {now(ICU)}) %>%
-  seize("bed",1) %>%
+  seize("T03bed",1) %>%
   log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
-  timeout(function() rnorm (1,bedsinICU)) %>%  ##mean beds in ICU
-  release("bed") %>%
+  timeout(function() rnorm (1,T03beds)) %>%  ##mean beds in ICU
+  release("T03bed") %>%
   
-  seize("nurse",1) %>%
-  timeout(function() rnorm (1,nursesinICU)) %>%  ##mean nurses in ICU
-  release("nurse") %>%
   
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("T06bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,T06beds)) %>%  ##mean beds in ICU
+  release("T06bed") %>%
+  
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("WMSbed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,WMSbeds)) %>%  ##mean beds in ICU
+  release("WMSbed") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("GBWbed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,GBWbeds)) %>%  ##mean beds in ICU
+  release("GBWbed") %>%
+
   log_(function() {paste("Finished: ", now(ICU))})
 
 
 ICU <-
   simmer("ICU") %>%
-  add_resource("bed",23) %>%  #23beds in Tower
-  add_resource("nurse",52) %>%  #Need to check Funded for 52 staff in ICU across all sites ?
-  add_generator("Patient", Patient,function() rnorm (1,arrinICU))##
+ ## add_resource("bed",capacity = 52) %>%  #52 beds in ICu
+  add_resource("T03bed",capacity = 23) %>%  #23beds in Tower
+  add_resource("T06bed",capacity =10) %>%  
+  add_resource("WMSbed",capacity =9) %>%  
+  add_resource("GBWbed",capacity =10) %>%  
+  add_generator("Patient", Patient,function() rnorm (1,arrinICU))
 
-ICU %>% run(until = 400)  ##simulation runs for 400days
+
+ICU %>%run(until = 1000)  ##simulation runs for 400days
+
+
 ICU %>% get_mon_arrivals()
 
 
@@ -60,27 +99,207 @@ server_state <- head(resource_monitor$server, -1)
 time_state_lasted <- diff(resource_monitor$time)
 time_at_end <- max(resource_monitor$time)
 
-##mean_active_customers <- sum(server_state * time_state_lasted) / time_at_end
-##mean_waiting_customers <- sum(queue_state * time_state_lasted) / time_at_end
+################WEEKEND VS WEEKDAY#######################################
 
-##cat(" Average waiting = ", mean_waiting_customers, "\n",
-  ## "Average active  = ", mean_active_customers, "\n")
+set.seed(1234)
+
+ICU <-simmer("ICU")
+
+###WEEKDAY
+
+
+T03beds <-109.34
+T03arrinICU <-8.53
+
+T06beds <-45.55
+T06arrinICU <-4.3
+
+WMSbeds <- 47.69
+WMSarrinICU <- 9.25
+
+GBWbeds <-85.6
+GWBarrinICU <-6.86
+
+
+Patient <-
+  trajectory("PatientsinICU") %>%
+  log_("BedOccupancyICU") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,totalbedsinICU)) %>%  ##mean beds in ICU
+  release("bed") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("T03bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,T03beds)) %>%  ##mean beds in ICU
+  release("T03bed") %>%
+  
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("T06bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,T06beds)) %>%  ##mean beds in ICU
+  release("T06bed") %>%
+  
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("WMSbed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,WMSbeds)) %>%  ##mean beds in ICU
+  release("WMSbed") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("GBWbed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,GBWbeds)) %>%  ##mean beds in ICU
+  release("GBWbed") %>%
+  
+  log_(function() {paste("Finished: ", now(ICU))})
+
+
+ICU <-
+  simmer("ICU") %>%
+  add_resource("bed",capacity = 52) %>%  #52 beds in ICu
+  add_resource("T03bed",capacity = 23) %>%  #23beds in Tower
+  add_resource("T06bed",capacity =10) %>%  
+  add_resource("WMSbed",capacity =9) %>%  
+  add_resource("GBWbed",capacity =10) %>%  
+  add_generator("Patient", Patient,function() rnorm (1,arrinICU))
+
+
+ICU %>%run(until = 500)  ##simulation runs for 400days
+
+
+ICU %>% get_mon_arrivals()
+
+
+ICU_monitor<-get_mon_arrivals(ICU) %>%
+  transform(waiting_time = end_time - start_time - activity_time) 
+
+mean_waiting_time <- mean(ICU_monitor$wait)
+resource_monitor <- get_mon_resources(ICU)
+
+queue_state <- head(resource_monitor$queue, -1)
+server_state <- head(resource_monitor$server, -1)
+time_state_lasted <- diff(resource_monitor$time)
+time_at_end <- max(resource_monitor$time)
+
+
+######################WEEKEND######################
+
+set.seed(1234)
+
+ICU <-simmer("ICU")
+
+###WEEKDAY
+
+
+T03beds <-177.96
+T03arrinICU <-0
+
+T06beds <-144.92
+T06arrinICU <-0
+
+WMSbeds <- 119.62
+WMSarrinICU <- 0
+
+GBWbeds <-210.2
+GWBarrinICU <-0
+
+
+Patient <-
+  trajectory("PatientsinICU") %>%
+  log_("BedOccupancyICU") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,totalbedsinICU)) %>%  ##mean beds in ICU
+  release("bed") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("T03bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,T03beds)) %>%  ##mean beds in ICU
+  release("T03bed") %>%
+  
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("T06bed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,T06beds)) %>%  ##mean beds in ICU
+  release("T06bed") %>%
+  
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("WMSbed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,WMSbeds)) %>%  ##mean beds in ICU
+  release("WMSbed") %>%
+  
+  set_attribute("start_time", function() {now(ICU)}) %>%
+  seize("GBWbed",1) %>%
+  log_(function() {paste("Waited: ", now(ICU) - get_attribute(ICU, "start_date"))}) %>%
+  timeout(function() rnorm (1,GBWbeds)) %>%  ##mean beds in ICU
+  release("GBWbed") %>%
+  
+  log_(function() {paste("Finished: ", now(ICU))})
+
+
+ICU <-
+  simmer("ICU") %>%
+  add_resource("bed",capacity = 52) %>%  #52 beds in ICu
+  add_resource("T03bed",capacity = 23) %>%  #23beds in Tower
+  add_resource("T06bed",capacity =10) %>%  
+  add_resource("WMSbed",capacity =9) %>%  
+  add_resource("GBWbed",capacity =10) %>%  
+  add_generator("Patient", Patient,function() rnorm (1,arrinICU))
+
+
+ICU %>%run(until = 1000)  ##simulation runs for 400days
+
+
+ICU %>% get_mon_arrivals()
+
+
+ICU_monitor<-get_mon_arrivals(ICU) %>%
+  transform(waiting_time = end_time - start_time - activity_time) 
+
+mean_waiting_time <- mean(ICU_monitor$wait)
+resource_monitor <- get_mon_resources(ICU)
+
+queue_state <- head(resource_monitor$queue, -1)
+server_state <- head(resource_monitor$server, -1)
+time_state_lasted <- diff(resource_monitor$time)
+time_at_end <- max(resource_monitor$time)
+
+
 
 
 ###############GRAPHS##############
+
 
 ICU %>%
   get_mon_resources() %>%
   .[order(.$time),]
 
-plot(ICU,
-     what = "resources",
-     metric = "usage",
-     names = c( "bed","nurse"),
-     items = "system",
-     steps = TRUE)
 
-plot(ICU,what="resources",metric="usage",c("bed","nurse"),items=c("server","queue"))
-plot(ICU,what="arrivals",metric="waiting_time")
+p1=plot(ICU,what="resources",metric="usage",c("bed"),items=c("server","queue"),xlim=c(200,700))
+p2=plot(ICU,what="resources",metric="usage",c("T03bed"),items=c("server","queue"),xlim=c(200,700))
+p3=plot(ICU,what="resources",metric="usage",c("T06bed"),items=c("server","queue"),xlim=c(200,700))
+p4=plot(ICU,what="resources",metric="usage",c("WMSbed"),items=c("server","queue"),xlim=c(200,700))
+p5=plot(ICU,what="resources",metric="usage",c("GBWbed"),items=c("server","queue"),xlim=c(200,500))
 
-##plot(get_mon_resources((ICU)))
+grid.arrange(p2,p3,p4,p5)
+
+
+
+##p2=plot(ICU,what="resources",metric="usage","T03bed",items=c("server","queue"))
+
+print(ICU)
+
+write.csv(resource_monitor,"ICU_Data.csv")
+
